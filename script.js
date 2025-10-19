@@ -327,6 +327,7 @@ retakeButton.addEventListener('click', resetAssessment);
 exportPdfButton.addEventListener('click', exportResultsAsPdf);
 
 renderQuestion();
+
 // Auto-fill date field with today's date
 document.addEventListener("DOMContentLoaded", () => {
   const dateField = document.getElementById("date");
