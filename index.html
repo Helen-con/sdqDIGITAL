@@ -15,15 +15,30 @@
     <header class="app__header">
       <h1>Strengths and Difficulties Questionnaire (SDQ)</h1>
       <p class="app__intro">
-        Complete each question in sequence. Select the response that best describes the child's behaviour over the past six months. 
-        Results include subscale scores, total difficulties, and interpretation guidance.
+        Complete each question in sequence. Select the response that best describes behaviour over the past six
+        months. Choose the appropriate questionnaire version for parents and carers, teachers, or self-reporting
+        young people (ages 11–17).
       </p>
     </header>
 
-    <!-- Identifier + Date -->
-    <div class="metadata" style="margin:1rem 0; padding:1rem; border:1px solid #ddd; border-radius:8px;">
-      <label for="identifier"><strong>Identifier / Name:</strong></label>
-      <input type="text" id="identifier" name="identifier" placeholder="Enter ID or name" style="margin:0 1rem 0 .5rem">
+    <section class="metadata" aria-label="Assessment details">
+      <div class="metadata__field">
+        <label for="identifier">Identifier / Name</label>
+        <input type="text" id="identifier" name="identifier" placeholder="Enter ID or name">
+      </div>
+      <div class="metadata__field">
+        <label for="date">Date</label>
+        <input type="date" id="date" name="date">
+      </div>
+      <div class="metadata__field metadata__field--full">
+        <label for="questionnaireType">Questionnaire Version</label>
+        <select id="questionnaireType" name="questionnaireType">
+          <option value="parent">Parent / Carer Report</option>
+          <option value="teacher">Teacher Report</option>
+          <option value="self">Self-Report (ages 11–17)</option>
+        </select>
+      </div>
+    </section>
 
       <label for="date"><strong>Date:</strong></label>
       <input type="date" id="date" name="date">
@@ -62,6 +77,7 @@
     <!-- Results -->
     <section class="results" id="resultsSection" hidden>
       <h2>Results &amp; Interpretation</h2>
+      <dl class="results__details" id="resultsDetails"></dl>
       <p class="results__summary" id="resultsSummary"></p>
 
       <div class="results__grid" id="resultsGrid"></div>
