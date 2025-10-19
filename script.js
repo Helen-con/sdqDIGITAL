@@ -161,10 +161,24 @@ function updateNavigationState() {
     currentQuestionIndex === currentQuestions.length - 1 ? 'Generate Results' : 'Next';
 }
 
-function goToQuestion(index) {
-  currentQuestionIndex = index;
+const questionTextEl = document.getElementById('question-text');
+const currentQuestionEl = document.getElementById('current-question');
+const totalQuestionsEl = document.getElementById('total-questions');
+const progressFillEl = document.querySelector('.progress__bar-fill');
+const progressBarEl = document.querySelector('.progress__bar');
+const formEl = document.getElementById('response-form');
+const prevBtn = document.getElementById('prev-btn');
+const nextBtn = document.getElementById('next-btn');
+const generateBtn = document.getElementById('generate-btn');
+const exportBtn = document.getElementById('export-btn');
+const resultsSection = document.getElementById('results');
+const resultsGrid = document.getElementById('results-grid');
+const resultsAnalysis = document.getElementById('results-analysis');
+
+function init() {
+  totalQuestionsEl.textContent = questions.length.toString();
   renderQuestion();
-  questionCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  attachEventListeners();
 }
 
 function calculateScores() {
@@ -181,8 +195,6 @@ function calculateScores() {
     if (responseValue === null || responseValue === undefined) {
       throw new Error(`Missing response for question ${index + 1}`);
     }
-    const adjustedScore = question.reverse ? 2 - responseValue : responseValue;
-    subscaleTotals[question.subscale] += adjustedScore;
   });
 
   const totalDifficulties =
@@ -230,18 +242,19 @@ function buildResultsCards(scores) {
     card.appendChild(scoreValue);
     card.appendChild(tag);
 
-    resultsGrid.appendChild(card);
+    if (state.currentIndex < questions.length - 1) {
+      state.currentIndex += 1;
+      renderQuestion();
+    }
   });
-}
 
-function buildSummary(scores) {
-  const difficultiesSubscales = ['Emotional Symptoms', 'Conduct Problems', 'Hyperactivity', 'Peer Problems'];
-  const alerts = [];
-
-  difficultiesSubscales.forEach((subscale) => {
-    const classification = classifyScore(subscale, scores[subscale]);
-    if (classification.key !== 'normal') {
-      alerts.push(`${subscale} score (${scores[subscale]}) is in the ${classification.label.toLowerCase()} range.`);
+  formEl.addEventListener('change', (event) => {
+    if (event.target && event.target.name === 'response') {
+      const value = Number(event.target.value);
+      state.responses[state.currentIndex] = value;
+      formEl.classList.remove('question__options--error');
+      formEl.removeAttribute('data-error');
+      updateNavigationState();
     }
   });
 
@@ -308,11 +321,9 @@ function generateResults() {
 
     questionCard.hidden = true;
     resultsSection.hidden = false;
-    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  } catch (error) {
-    alert(error.message);
-  }
-}
+    resultsSection.scrollIntoView({ behavior: 'smooth' });
+    exportBtn.disabled = false;
+  });
 
 function resetAssessment() {
   responses = Array(currentQuestions.length).fill(null);
@@ -381,11 +392,11 @@ function exportResultsAsPdf() {
     cursorY += 22;
   });
 
-  doc.setFontSize(10);
-  doc.setTextColor(120);
-  doc.text('Banding based on UK SDQ scoring guidance (ages 4-17).', margin, doc.internal.pageSize.getHeight() - margin + 20);
+  prevBtn.disabled = state.currentIndex === 0;
+  nextBtn.textContent = state.currentIndex === questions.length - 1 ? 'End of Questions' : 'Next Question';
+  generateBtn.disabled = !areAllQuestionsAnswered();
 
-  doc.save('sdq-results.pdf');
+  updateNavigationState();
 }
 
 function loadQuestionnaire(key) {
