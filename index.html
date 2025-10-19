@@ -1,36 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SDQ Digital Assessment</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <main class="app">
-      <header class="app__header">
-        <h1>Strengths and Difficulties Questionnaire (SDQ)</h1>
-        <p>
-          Please respond to each statement about the child as it has applied over the
-          past six months. Choose the option that best reflects your observations.
-        </p>
-      </header>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SDQ Digital Assessment</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
 
-      <section class="progress" aria-live="polite">
-        <div class="progress__label">
-          Question <span id="current-question">1</span> of <span id="total-questions">25</span>
-        </div>
-        <div class="progress__bar" role="progressbar" aria-valuemin="0" aria-valuemax="25" aria-valuenow="1">
-          <div class="progress__bar-fill"></div>
-        </div>
-      </section>
+<body>
+  <main class="app">
+    <header class="app__header">
+      <h1>Strengths and Difficulties Questionnaire (SDQ)</h1>
+      <p class="app__intro">
+        Complete each question in sequence. Select the response that best describes the child's behaviour over the past six months. 
+        Results include subscale scores, total difficulties, and interpretation guidance.
+      </p>
+    </header>
 
-      <section class="question" aria-live="polite">
-        <h2 id="question-text"></h2>
-        <form id="response-form" class="question__options" aria-labelledby="question-text">
-          <!-- Options inserted dynamically -->
+    <!-- Identifier + Date -->
+    <div class="metadata" style="margin:1rem 0; padding:1rem; border:1px solid #ddd; border-radius:8px;">
+      <label for="identifier"><strong>Identifier / Name:</strong></label>
+      <input type="text" id="identifier" name="identifier" placeholder="Enter ID or name" style="margin:0 1rem 0 .5rem">
+
+      <label for="date"><strong>Date:</strong></label>
+      <input type="date" id="date" name="date">
+    </div>
+
+    <!-- Progress -->
+    <section class="progress" aria-live="polite">
+      <div class="progress__label">
+        Question <span id="current-question">1</span> of <span id="total-questions">25</span>
+      </div>
+      <div class="progress__bar" role="progressbar" aria-valuemin="0" aria-valuemax="25" aria-valuenow="1">
+        <div class="progress__bar-fill" id="progressFill" style="width: 4%;"></div>
+      </div>
+    </section>
+
+    <!-- Question card -->
+    <section class="question-card" id="questionCard" aria-live="polite">
+      <div class="question-card__body">
+        <h2 id="questionText">Question text</h2>
+        <form id="responseForm" class="response-options">
+          <!-- Radio buttons injected here -->
         </form>
-      </section>
+      </div>
 
       <nav class="navigation">
         <button id="prev-btn" type="button" class="btn" disabled>Previous</button>
@@ -41,45 +57,54 @@
         <button id="generate-btn" type="button" class="btn btn--accent" disabled>Generate Results</button>
         <button id="export-btn" type="button" class="btn" disabled>Export as PDF</button>
       </section>
+    </section>
 
-      <section id="results" class="results" hidden>
-        <h2>Results Summary</h2>
-        <p class="results__intro">
-          Scores are shown for each SDQ subscale together with the overall Total
-          Difficulties score. Interpretive bands follow UK norms for ages 4&ndash;17.
-        </p>
+    <!-- Results -->
+    <section class="results" id="resultsSection" hidden>
+      <h2>Results &amp; Interpretation</h2>
+      <p class="results__summary" id="resultsSummary"></p>
 
-        <div class="results__grid" id="results-grid"></div>
+      <div class="results__grid" id="resultsGrid"></div>
 
-        <div class="results__analysis" id="results-analysis"></div>
-      </section>
-    </main>
+      <p class="results__note">
+        Scores are based on the UK scoring bands for the SDQ (ages 4–17). Clinical judgement should complement these findings.
+      </p>
+
+      <div class="results__actions">
+        <button type="button" id="exportPdf" class="button button--outline">Export as PDF</button>
+        <button type="button" id="retake" class="button button--ghost">Start Again</button>
+      </div>
+    </section>
 
     <footer class="app__footer">
       <small>
-        This digital SDQ is provided for informational purposes only and should not
-        replace professional judgement. For formal assessment, consult with a qualified practitioner.
+        This digital SDQ is provided for informational purposes only and should not replace professional judgement.
+        For formal assessment, consult with a qualified practitioner.
       </small>
     </footer>
+  </main>
 
-    <template id="option-template">
-      <label class="option">
-        <input type="radio" name="response" value="" />
-        <span class="option__text"></span>
-      </label>
-    </template>
+  <!-- Templates -->
+  <template id="option-template">
+    <label class="option">
+      <input type="radio" name="response" value="">
+      <span class="option__text"></span>
+    </label>
+  </template>
 
-    <template id="result-card-template">
-      <article class="result-card">
-        <header>
-          <h3 class="result-card__title"></h3>
-          <p class="result-card__score"></p>
-        </header>
-        <p class="result-card__band"></p>
-        <p class="result-card__description"></p>
-      </article>
-    </template>
+  <template id="result-card-template">
+    <article class="result-card">
+      <header>
+        <h3 class="result-card__title"></h3>
+        <p class="result-card__score"></p>
+      </header>
+      <p class="result-card__band"></p>
+      <p class="result-card__description"></p>
+    </article>
+  </template>
 
-    <script src="script.js"></script>
-  </body>
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="script.js"></script>
+</body>
 </html>
