@@ -96,10 +96,13 @@ const responseLabels = [
 const questionCard = document.getElementById('questionCard');
 const questionText = document.getElementById('questionText');
 const responseForm = document.getElementById('responseForm');
-const progressIndicator = document.getElementById('progressIndicator');
+const currentQuestionEl = document.getElementById('current-question');
+const totalQuestionsEl = document.getElementById('total-questions');
 const progressFill = document.getElementById('progressFill');
-const prevButton = document.getElementById('prevButton');
-const nextButton = document.getElementById('nextButton');
+const prevBtn = document.getElementById('prev-btn');
+const nextBtn = document.getElementById('next-btn');
+const generateBtn = document.getElementById('generate-btn');
+const exportBtn = document.getElementById('export-btn');
 const resultsSection = document.getElementById('resultsSection');
 const resultsGrid = document.getElementById('resultsGrid');
 const resultsSummary = document.getElementById('resultsSummary');
@@ -120,7 +123,8 @@ let latestResults = null;
 function renderQuestion() {
   const question = currentQuestions[currentQuestionIndex];
   questionText.textContent = question.text;
-  progressIndicator.textContent = `Question ${currentQuestionIndex + 1} of ${currentQuestions.length}`;
+  currentQuestionEl.textContent = currentQuestionIndex + 1;
+  totalQuestionsEl.textContent = currentQuestions.length;
   const progressPercent = ((currentQuestionIndex + 1) / currentQuestions.length) * 100;
   progressFill.style.width = `${progressPercent}%`;
 
@@ -154,31 +158,22 @@ function renderQuestion() {
 }
 
 function updateNavigationState() {
-  prevButton.disabled = currentQuestionIndex === 0;
+  prevBtn.disabled = currentQuestionIndex === 0;
   const hasResponse = responses[currentQuestionIndex] !== null;
-  nextButton.disabled = !hasResponse;
-  nextButton.textContent =
-    currentQuestionIndex === currentQuestions.length - 1 ? 'Generate Results' : 'Next';
+  nextBtn.disabled = !hasResponse;
+  
+  if (currentQuestionIndex === currentQuestions.length - 1) {
+    nextBtn.style.display = 'none';
+    generateBtn.disabled = !hasResponse;
+  } else {
+    nextBtn.style.display = 'inline-block';
+    generateBtn.disabled = true;
+  }
 }
 
-const questionTextEl = document.getElementById('question-text');
-const currentQuestionEl = document.getElementById('current-question');
-const totalQuestionsEl = document.getElementById('total-questions');
-const progressFillEl = document.querySelector('.progress__bar-fill');
-const progressBarEl = document.querySelector('.progress__bar');
-const formEl = document.getElementById('response-form');
-const prevBtn = document.getElementById('prev-btn');
-const nextBtn = document.getElementById('next-btn');
-const generateBtn = document.getElementById('generate-btn');
-const exportBtn = document.getElementById('export-btn');
-const resultsSection = document.getElementById('results');
-const resultsGrid = document.getElementById('results-grid');
-const resultsAnalysis = document.getElementById('results-analysis');
-
-function init() {
-  totalQuestionsEl.textContent = questions.length.toString();
+function goToQuestion(index) {
+  currentQuestionIndex = index;
   renderQuestion();
-  attachEventListeners();
 }
 
 function calculateScores() {
@@ -195,6 +190,13 @@ function calculateScores() {
     if (responseValue === null || responseValue === undefined) {
       throw new Error(`Missing response for question ${index + 1}`);
     }
+    
+    let score = parseInt(responseValue);
+    if (question.reverse) {
+      score = 2 - score;
+    }
+    
+    subscaleTotals[question.subscale] += score;
   });
 
   const totalDifficulties =
@@ -241,20 +243,18 @@ function buildResultsCards(scores) {
     card.appendChild(title);
     card.appendChild(scoreValue);
     card.appendChild(tag);
-
-    if (state.currentIndex < questions.length - 1) {
-      state.currentIndex += 1;
-      renderQuestion();
-    }
+    
+    resultsGrid.appendChild(card);
   });
+}
 
-  formEl.addEventListener('change', (event) => {
-    if (event.target && event.target.name === 'response') {
-      const value = Number(event.target.value);
-      state.responses[state.currentIndex] = value;
-      formEl.classList.remove('question__options--error');
-      formEl.removeAttribute('data-error');
-      updateNavigationState();
+function buildSummary(scores) {
+  const alerts = [];
+  
+  ['Emotional Symptoms', 'Conduct Problems', 'Hyperactivity', 'Peer Problems'].forEach((subscale) => {
+    const classification = classifyScore(subscale, scores[subscale]);
+    if (classification.key === 'borderline' || classification.key === 'abnormal') {
+      alerts.push(`${subscale} (${scores[subscale]}, ${classification.label})`);
     }
   });
 
@@ -265,7 +265,7 @@ function buildResultsCards(scores) {
   let summary = `${versionLabel}: The Total Difficulties score is ${scores['Total Difficulties']}, which falls within the ${totalClassification.label.toLowerCase()} band.`;
 
   if (alerts.length > 0) {
-    summary += ` Key areas for follow up: ${alerts.join(' ')}`;
+    summary += ` Key areas for follow up: ${alerts.join('; ')}.`;
   } else {
     summary += ' No individual difficulty subscale scored in the borderline or abnormal range.';
   }
@@ -323,7 +323,10 @@ function generateResults() {
     resultsSection.hidden = false;
     resultsSection.scrollIntoView({ behavior: 'smooth' });
     exportBtn.disabled = false;
-  });
+  } catch (error) {
+    alert('Error generating results: ' + error.message);
+  }
+}
 
 function resetAssessment() {
   responses = Array(currentQuestions.length).fill(null);
@@ -392,11 +395,7 @@ function exportResultsAsPdf() {
     cursorY += 22;
   });
 
-  prevBtn.disabled = state.currentIndex === 0;
-  nextBtn.textContent = state.currentIndex === questions.length - 1 ? 'End of Questions' : 'Next Question';
-  generateBtn.disabled = !areAllQuestionsAnswered();
-
-  updateNavigationState();
+  doc.save('SDQ-Results.pdf');
 }
 
 function loadQuestionnaire(key) {
@@ -413,13 +412,13 @@ function loadQuestionnaire(key) {
   renderQuestion();
 }
 
-prevButton.addEventListener('click', () => {
+prevBtn.addEventListener('click', () => {
   if (currentQuestionIndex > 0) {
     goToQuestion(currentQuestionIndex - 1);
   }
 });
 
-nextButton.addEventListener('click', () => {
+nextBtn.addEventListener('click', () => {
   if (responses[currentQuestionIndex] === null) {
     return;
   }
@@ -433,6 +432,14 @@ nextButton.addEventListener('click', () => {
   } else {
     goToQuestion(currentQuestionIndex + 1);
   }
+});
+
+generateBtn.addEventListener('click', () => {
+  if (responses.some((response) => response === null)) {
+    alert('Please answer all questions before generating results.');
+    return;
+  }
+  generateResults();
 });
 
 retakeButton.addEventListener('click', resetAssessment);
