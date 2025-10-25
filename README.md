@@ -46,5 +46,7 @@ To share the SDQ assessment with clients for completion:
    - Browser print to PDF
    - PDF export button (when jsPDF is available)
 
-> **Privacy Note:** This is a client-side only application. No data is sent to any server.
-All responses and results remain on the user's device.
+> **Privacy Note:** This is a client-side only application. No assessment data is sent to any server.
+All responses and results remain on the user's device. Note: The PDF export feature loads the jsPDF
+library from a CDN, which involves an external network request. For maximum privacy, download jsPDF
+locally or use browser print instead.
