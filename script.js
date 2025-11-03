@@ -96,10 +96,13 @@ const responseLabels = [
 const questionCard = document.getElementById('questionCard');
 const questionText = document.getElementById('questionText');
 const responseForm = document.getElementById('responseForm');
-const progressIndicator = document.getElementById('progressIndicator');
+const currentQuestionEl = document.getElementById('current-question');
+const totalQuestionsEl = document.getElementById('total-questions');
 const progressFill = document.getElementById('progressFill');
-const prevButton = document.getElementById('prevButton');
-const nextButton = document.getElementById('nextButton');
+const prevBtn = document.getElementById('prev-btn');
+const nextBtn = document.getElementById('next-btn');
+const generateBtn = document.getElementById('generate-btn');
+const exportBtn = document.getElementById('export-btn');
 const resultsSection = document.getElementById('resultsSection');
 const resultsGrid = document.getElementById('resultsGrid');
 const resultsSummary = document.getElementById('resultsSummary');
@@ -120,7 +123,8 @@ let latestResults = null;
 function renderQuestion() {
   const question = currentQuestions[currentQuestionIndex];
   questionText.textContent = question.text;
-  progressIndicator.textContent = `Question ${currentQuestionIndex + 1} of ${currentQuestions.length}`;
+  currentQuestionEl.textContent = currentQuestionIndex + 1;
+  totalQuestionsEl.textContent = currentQuestions.length;
   const progressPercent = ((currentQuestionIndex + 1) / currentQuestions.length) * 100;
   progressFill.style.width = `${progressPercent}%`;
 
@@ -154,17 +158,22 @@ function renderQuestion() {
 }
 
 function updateNavigationState() {
-  prevButton.disabled = currentQuestionIndex === 0;
+  prevBtn.disabled = currentQuestionIndex === 0;
   const hasResponse = responses[currentQuestionIndex] !== null;
-  nextButton.disabled = !hasResponse;
-  nextButton.textContent =
-    currentQuestionIndex === currentQuestions.length - 1 ? 'Generate Results' : 'Next';
+  nextBtn.disabled = !hasResponse;
+  
+  if (currentQuestionIndex === currentQuestions.length - 1) {
+    nextBtn.style.display = 'none';
+    generateBtn.disabled = !hasResponse;
+  } else {
+    nextBtn.style.display = 'inline-block';
+    generateBtn.disabled = true;
+  }
 }
 
 function goToQuestion(index) {
   currentQuestionIndex = index;
   renderQuestion();
-  questionCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function calculateScores() {
@@ -181,8 +190,13 @@ function calculateScores() {
     if (responseValue === null || responseValue === undefined) {
       throw new Error(`Missing response for question ${index + 1}`);
     }
-    const adjustedScore = question.reverse ? 2 - responseValue : responseValue;
-    subscaleTotals[question.subscale] += adjustedScore;
+    
+    let score = parseInt(responseValue);
+    if (question.reverse) {
+      score = 2 - score;
+    }
+    
+    subscaleTotals[question.subscale] += score;
   });
 
   const totalDifficulties =
@@ -229,19 +243,18 @@ function buildResultsCards(scores) {
     card.appendChild(title);
     card.appendChild(scoreValue);
     card.appendChild(tag);
-
+    
     resultsGrid.appendChild(card);
   });
 }
 
 function buildSummary(scores) {
-  const difficultiesSubscales = ['Emotional Symptoms', 'Conduct Problems', 'Hyperactivity', 'Peer Problems'];
   const alerts = [];
-
-  difficultiesSubscales.forEach((subscale) => {
+  
+  ['Emotional Symptoms', 'Conduct Problems', 'Hyperactivity', 'Peer Problems'].forEach((subscale) => {
     const classification = classifyScore(subscale, scores[subscale]);
-    if (classification.key !== 'normal') {
-      alerts.push(`${subscale} score (${scores[subscale]}) is in the ${classification.label.toLowerCase()} range.`);
+    if (classification.key === 'borderline' || classification.key === 'abnormal') {
+      alerts.push(`${subscale} (${scores[subscale]}, ${classification.label})`);
     }
   });
 
@@ -252,7 +265,7 @@ function buildSummary(scores) {
   let summary = `${versionLabel}: The Total Difficulties score is ${scores['Total Difficulties']}, which falls within the ${totalClassification.label.toLowerCase()} band.`;
 
   if (alerts.length > 0) {
-    summary += ` Key areas for follow up: ${alerts.join(' ')}`;
+    summary += ` Key areas for follow up: ${alerts.join('; ')}.`;
   } else {
     summary += ' No individual difficulty subscale scored in the borderline or abnormal range.';
   }
@@ -308,9 +321,10 @@ function generateResults() {
 
     questionCard.hidden = true;
     resultsSection.hidden = false;
-    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    resultsSection.scrollIntoView({ behavior: 'smooth' });
+    exportBtn.disabled = false;
   } catch (error) {
-    alert(error.message);
+    alert('Error generating results: ' + error.message);
   }
 }
 
@@ -381,20 +395,13 @@ function exportResultsAsPdf() {
     cursorY += 22;
   });
 
-  doc.setFontSize(10);
-  doc.setTextColor(120);
-  doc.text('Banding based on UK SDQ scoring guidance (ages 4-17).', margin, doc.internal.pageSize.getHeight() - margin + 20);
-
-  doc.save('sdq-results.pdf');
+  doc.save('SDQ-Results.pdf');
 }
 
 function loadQuestionnaire(key) {
   currentQuestionnaireKey = key;
   currentQuestions = questionnaires[key].questions;
   currentScoringBands = scoringBandsByVersion[key];
-  if (questionnaireTypeSelect && questionnaireTypeSelect.value !== key) {
-    questionnaireTypeSelect.value = key;
-  }
   responses = Array(currentQuestions.length).fill(null);
   currentQuestionIndex = 0;
   latestResults = null;
@@ -405,13 +412,13 @@ function loadQuestionnaire(key) {
   renderQuestion();
 }
 
-prevButton.addEventListener('click', () => {
+prevBtn.addEventListener('click', () => {
   if (currentQuestionIndex > 0) {
     goToQuestion(currentQuestionIndex - 1);
   }
 });
 
-nextButton.addEventListener('click', () => {
+nextBtn.addEventListener('click', () => {
   if (responses[currentQuestionIndex] === null) {
     return;
   }
@@ -425,6 +432,14 @@ nextButton.addEventListener('click', () => {
   } else {
     goToQuestion(currentQuestionIndex + 1);
   }
+});
+
+generateBtn.addEventListener('click', () => {
+  if (responses.some((response) => response === null)) {
+    alert('Please answer all questions before generating results.');
+    return;
+  }
+  generateResults();
 });
 
 retakeButton.addEventListener('click', resetAssessment);
@@ -453,38 +468,4 @@ loadQuestionnaire(currentQuestionnaireKey);
 if (dateInput && !dateInput.value) {
   const today = new Date().toISOString().split('T')[0];
   dateInput.value = today;
-}
-
-const sdqApp = {
-  loadQuestionnaire,
-  calculateScores,
-  classifyScore,
-  buildSummary,
-  resetAssessment,
-  generateResults,
-  exportResultsAsPdf,
-  getState: () => ({
-    currentQuestionnaireKey,
-    currentQuestions,
-    currentScoringBands,
-    responses: [...responses],
-    currentQuestionIndex,
-    latestResults
-  }),
-  setResponsesForTesting: (newResponses) => {
-    responses = [...newResponses];
-  },
-  setLatestResultsForTesting: (results) => {
-    latestResults = results;
-  },
-  getQuestionnaires: () => questionnaires,
-  getScoringBands: () => scoringBandsByVersion
-};
-
-if (typeof window !== 'undefined') {
-  window.sdqApp = sdqApp;
-}
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = sdqApp;
 }

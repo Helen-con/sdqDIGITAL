@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Strengths and Difficulties Questionnaire (SDQ)</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SDQ Digital Assessment</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
   <main class="app">
     <header class="app__header">
@@ -39,44 +40,83 @@
       </div>
     </section>
 
-    <section class="question-card" id="questionCard" aria-live="polite">
-      <div class="question-card__progress">
-        <span id="progressIndicator">Question 1 of 25</span>
-        <div class="progress-bar">
-          <div class="progress-bar__fill" id="progressFill" style="width: 4%;"></div>
-        </div>
+    <!-- Progress -->
+    <section class="progress" aria-live="polite">
+      <div class="progress__label">
+        Question <span id="current-question">1</span> of <span id="total-questions">25</span>
       </div>
+      <div class="progress__bar" role="progressbar" aria-valuemin="0" aria-valuemax="25" aria-valuenow="1">
+        <div class="progress__bar-fill" id="progressFill" style="width: 4%;"></div>
+      </div>
+    </section>
+
+    <!-- Question card -->
+    <section class="question-card" id="questionCard" aria-live="polite">
       <div class="question-card__body">
         <h2 id="questionText">Question text</h2>
         <form id="responseForm" class="response-options">
           <!-- Radio buttons injected here -->
         </form>
       </div>
-      <div class="question-card__actions">
-        <button type="button" id="prevButton" class="button button--ghost">Previous</button>
-        <button type="button" id="nextButton" class="button">Next</button>
-      </div>
+
+      <nav class="navigation">
+        <button id="prev-btn" type="button" class="btn" disabled>Previous</button>
+        <button id="next-btn" type="button" class="btn btn--primary">Next</button>
+      </nav>
+
+      <section class="actions">
+        <button id="generate-btn" type="button" class="btn btn--accent" disabled>Generate Results</button>
+        <button id="export-btn" type="button" class="btn" disabled>Export as PDF</button>
+      </section>
     </section>
 
+    <!-- Results -->
     <section class="results" id="resultsSection" hidden>
       <h2>Results &amp; Interpretation</h2>
       <dl class="results__details" id="resultsDetails"></dl>
       <p class="results__summary" id="resultsSummary"></p>
-      <div class="results__grid" id="resultsGrid">
-        <!-- Score rows injected -->
-      </div>
+
+      <div class="results__grid" id="resultsGrid"></div>
+
       <p class="results__note">
-        Scores are based on the UK scoring bands for the SDQ (ages 4-17). Clinical judgement should complement these
-        findings.
+        Scores are based on the UK scoring bands for the SDQ (ages 4–17). Clinical judgement should complement these findings.
       </p>
+
       <div class="results__actions">
         <button type="button" id="exportPdf" class="button button--outline">Export as PDF</button>
         <button type="button" id="retake" class="button button--ghost">Start Again</button>
       </div>
     </section>
+
+    <footer class="app__footer">
+      <small>
+        This digital SDQ is provided for informational purposes only and should not replace professional judgement.
+        For formal assessment, consult with a qualified practitioner.
+      </small>
+    </footer>
   </main>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-VfX0M+zAm8h1Hn0SI7RyhokW2N7DbStO2Qd6hw2yYB9H9n1tFoZT3zh0+BTtPlqvGjufH6G+j6/adJzi10/r9Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <!-- Templates -->
+  <template id="option-template">
+    <label class="option">
+      <input type="radio" name="response" value="">
+      <span class="option__text"></span>
+    </label>
+  </template>
+
+  <template id="result-card-template">
+    <article class="result-card">
+      <header>
+        <h3 class="result-card__title"></h3>
+        <p class="result-card__score"></p>
+      </header>
+      <p class="result-card__band"></p>
+      <p class="result-card__description"></p>
+    </article>
+  </template>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

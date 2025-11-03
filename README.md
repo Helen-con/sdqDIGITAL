@@ -26,16 +26,27 @@ young people aged 11–17.
 > **Note:** Scoring bands reflect the UK SDQ guidance for ages 4–17. The digital tool supports
 screening and discussion but does not replace clinical judgement.
 
-## Development workflow
+## PDF Export
 
-The project uses Node's built-in test runner so no additional packages are required.
+The PDF export feature requires access to the jsPDF library from CDN. If you're using the application
+in an environment with strict content security policies or offline, you may need to:
 
-```bash
-npm test
-```
+1. Download jsPDF locally and update the script source in `index.html`, or
+2. Use your browser's print function (Ctrl+P or Cmd+P) to save the results page as a PDF
 
-To create a deployable copy of the static site in `dist/`, run:
+## Sharing with Clients
 
-```bash
-npm run deploy
-```
+To share the SDQ assessment with clients for completion:
+
+1. Host the files on a web server (the application is static HTML/CSS/JS)
+2. Share the URL with clients
+3. Clients complete the questionnaire and can view/export their results
+4. Results are displayed on-screen and can be shared via:
+   - Screenshot
+   - Browser print to PDF
+   - PDF export button (when jsPDF is available)
+
+> **Privacy Note:** This is a client-side only application. No assessment data is sent to any server.
+All responses and results remain on the user's device. Note: The PDF export feature loads the jsPDF
+library from a CDN, which involves an external network request. For maximum privacy, download jsPDF
+locally or use browser print instead.
