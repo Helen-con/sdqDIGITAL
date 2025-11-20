@@ -1,0 +1,15 @@
+{
+  "name": "sdqdigital",
+  "version": "1.0.0",
+  "description": "Browser-based Strengths and Difficulties Questionnaire with multi-informant support.",
+  "main": "script.js",
+  "scripts": {
+    "test": "node --test",
+    "build": "node scripts/build.js",
+    "deploy": "npm run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "commonjs"
+}
